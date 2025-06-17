@@ -6,9 +6,14 @@ const transportSchema = new Schema(
     class: { type: String, enum: ["eco", "first", "prem"], required: true },
     seat: { type: Number, required: true },
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
+transportSchema.virtual("tickets", {
+  ref: "mover",
+  localField: "_id",
+  foreignField: "transport_id",
+});
 const transportDb = model("mover", transportSchema);
 
 export default transportDb;
