@@ -1,4 +1,5 @@
 import { config } from "dotenv";
+import configEnv from "./config/config.js";
 import express from "express";
 import { connectDb } from "./db/data.js";
 import transportRoute from "./router/transport.js";
@@ -8,7 +9,7 @@ import cookieParser from "cookie-parser";
 config();
 
 const app = express();
-const port = process.env.PORT;
+const port = configEnv.PORT;
 
 app.use(express.json());
 app.use(cookieParser());
