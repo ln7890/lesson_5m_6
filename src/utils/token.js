@@ -12,7 +12,7 @@ export class Token {
       expiresIn: configEnv.REFRESH_TOKEN_TIME,
     });
   }
-  async verify(token, secretKey) {
+  async validateToken(token, secretKey) {
     return jwt.verify(token, secretKey);
   }
 }

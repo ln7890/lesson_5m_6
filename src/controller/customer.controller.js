@@ -10,7 +10,6 @@ import { Token } from "../utils/token.js";
 import { successRes } from "../helpers/success.js";
 import generateOtp from "../utils/generate-otp.js";
 import NodeCache from "node-cache";
-import customer from "../models/customer.model.js";
 import config from "../config/config.js";
 import { transporter } from "../helpers/sendmail.js";
 
@@ -100,7 +99,7 @@ export class customerController {
         return errorRes(res, `OTP invalid`, 400);
       }
       const customer = await Customer.findOne({ email: value.email });
-      const payload = { email: customer.email };
+      const payload = { id: customer._id };
       const accessToken = await token.grantAccessToken(payload);
       const refreshToken = await token.generateRefreshToken(payload);
       res.cookie("refreshTokenCustomer", refreshToken, {
@@ -110,6 +109,47 @@ export class customerController {
       });
 
       return successRes(res, { data: customer, token: accessToken }, 201);
+    } catch (error) {
+      return errorRes(res, error);
+    }
+  }
+  async generateAccessToken(req, res) {
+    try {
+      const refreshToken = req.cookies?.refreshTokenCustomer;
+      const refreshTokenValid = await token.validateToken(
+        refreshToken,
+        config.REFRESH_TOKEN_KEY
+      );
+      if (!refreshTokenValid) {
+        return errorRes(res, `Invalid token`, 400);
+      }
+      const user = await Customer.findById(refreshTokenValid.id);
+      if (!user) {
+        return errorRes(res, `No user`, 404);
+      }
+      const payload = { id: user._id };
+      const newAccessToken = await token.grantAccessToken(payload);
+      return successRes(res, newAccessToken, 200);
+    } catch (error) {
+      return errorRes(res, error);
+    }
+  }
+  async logOut(req, res) {
+    try {
+      const refreshToken = req.cookies?.refreshTokenCustomer;
+      const refreshTokenValid = await token.validateToken(
+        refreshToken,
+        config.REFRESH_TOKEN_KEY
+      );
+      if (!refreshTokenValid) {
+        return errorRes(res, `Invalid token`, 400);
+      }
+      const user = await Customer.findById(refreshTokenValid.id);
+      if (!user) {
+        return errorRes(res, `No user`, 404);
+      }
+      res.clearCookie("refreshTokenCustomer");
+      return successRes(res, { message: `Ref token removed` });
     } catch (error) {
       return errorRes(res, error);
     }
